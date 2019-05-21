@@ -1,0 +1,11 @@
+Ray Marching....
+
+features:
+
+	0: mouse click on the canvas to deploy another ray.
+	1: key press '1' - allows the circles to move or freeze
+	2: key press '2' - toggles the marching circles
+	3: key press '3' - toggles the beams of light
+	4: key press '4' - deletes all rays
+	5: key press '5' - 360 dense rays
+	6: key press '6' - 360 less dense rays
