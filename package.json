@@ -4,7 +4,7 @@
   "description": "The LCache is a node based restfulapi cache",
   "main": "index.js",
   "scripts": {
-    "test": "npm index.js"
+    "test": "node index.js"
   },
   "repository": {
     "type": "git",
