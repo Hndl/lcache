@@ -1,0 +1,11 @@
+language: node_js
+
+node_js : 
+	- "stable"
+	
+before_install:
+  # doing apt update can cause the build to slow down, it also causes some 500MB to be downloaded.
+  # consider if the apt really does need updating on each build.
+  #
+  # - sudo apt-get update
+  #
