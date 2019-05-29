@@ -9,8 +9,8 @@ info:
   license:
     name: "Apache 2.0"
     url: "http://www.apache.org/licenses/LICENSE-2.0.html"
-host: "virtserver.swaggerhub.com"
-basePath: "/lcache/1.0.1"
+host: "localhost:8080"
+basePath: "/lcache"
 tags:
 - name: "developer"
   description: "Operations available to developers"
@@ -24,7 +24,7 @@ paths:
       - "developer"
       summary: "adds an cache item"
       description: "Adds an item to the cache"
-      operationId: "put"
+      operationId: "set"
       consumes:
       - "application/json"
       produces:
@@ -58,7 +58,7 @@ paths:
       - "developer"
       summary: "searches cache using key and retrieve related value/object"
       description: "Search cache for key and retreive payload\n"
-      operationId: "get"
+      operationId: "fetch"
       produces:
       - "application/json"
       parameters:
@@ -71,7 +71,7 @@ paths:
         in: "path"
         description: "the key to search for"
         required: true
-        type: "integer"
+        type: "string"
       responses:
         200:
           description: "Found"
