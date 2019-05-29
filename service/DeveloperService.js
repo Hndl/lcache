@@ -12,7 +12,10 @@ var db = require('../db/db');
  **/
 exports.del = function(cachename,key) {
   return new Promise(function(resolve, reject) {
+	console.log(`deleting ${key}@${cachename}`);
     db.put('cgb','isabelle' ); 
+	console.log(`setting cgb@${cachename}`);
+	console.log(`deleting ${key}@${cachename}`);
     resolve();
   });
 }
