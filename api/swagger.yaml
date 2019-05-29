@@ -18,7 +18,7 @@ schemes:
 - "https"
 - "http"
 paths:
-  /cache/{cachename}/${key}:
+  /cache/{cachename}/{key}:
     put:
       tags:
       - "developer"
@@ -52,7 +52,6 @@ paths:
         400:
           description: "invalid input, object invalid"
       x-swagger-router-controller: "Developer"
-  /cache/{cachename}/{key}:
     get:
       tags:
       - "developer"
