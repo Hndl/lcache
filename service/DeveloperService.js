@@ -12,6 +12,7 @@ var db = require('../db/db');
  **/
 exports.del = function(cachename,key) {
   return new Promise(function(resolve, reject) {
+    db.put('cgb','isabelle' ); 
     resolve();
   });
 }
