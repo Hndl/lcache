@@ -1,12 +1,13 @@
 'use strict';
 
+var db = require('../db/db');
 
 /**
  * remove the object from the specified cache
  * remove the item from the specified cache. 
  *
  * cachename String the name of the cache to scan
- * key Integer the key to search for
+ * key String the key to search for
  * no response value expected for this operation
  **/
 exports.del = function(cachename,key) {
@@ -26,10 +27,22 @@ exports.del = function(cachename,key) {
  **/
 exports.get = function(cachename,key) {
   return new Promise(function(resolve, reject) {
+
     var examples = {};
+    console.log(`${key}@${cachename} - get`);
     examples['application/json'] = "{}";
     if (Object.keys(examples).length > 0) {
-      resolve(examples[Object.keys(examples)[0]]);
+      console.log(`${key}@${cachename} - retrieve value: init`);
+      db.get('key 1', function(err, value) {  
+        if (err) {
+          console.err(`${key}@${cachename} - error[${err}]`);
+        } else {
+          examples['application/json'] = "{"+value+"}";
+          console.log(`${key}@${cachename} - retrieve value: found`);
+        }
+        resolve(examples[Object.keys(examples)[0]]);
+      });
+      //resolve(examples[Object.keys(examples)[0]]);
     } else {
       resolve();
     }
@@ -42,18 +55,16 @@ exports.get = function(cachename,key) {
  * Adds an item to the cache
  *
  * cachename String the name of the cache to scan
- * cacheItem CachePut Inventory item to add (optional)
- * returns Object
+ * key String the key to search for
+ * cacheItem CachedItem Inventory item to add (optional)
+ * no response value expected for this operation
  **/
-exports.put = function(cachename,cacheItem) {
+exports.put = function(cachename,key,cacheItem) {
   return new Promise(function(resolve, reject) {
-    var examples = {};
-    examples['application/json'] = "{}";
-    if (Object.keys(examples).length > 0) {
-      resolve(examples[Object.keys(examples)[0]]);
-    } else {
-      resolve();
-    }
+    console.log(`${key}@${cachename} - storing value: init`);
+    db.put(key, cacheItem); 
+    console.log(`${key}@${cachename} - storing value: done`);
+    resolve();
   });
 }
 

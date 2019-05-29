@@ -2,7 +2,7 @@
 swagger: "2.0"
 info:
   description: "LCache - Leveldb cache mechanism"
-  version: "1.0.0"
+  version: "1.0.1"
   title: "RESTFUL API"
   contact:
     email: "clive.bury@gmail.com"
@@ -10,20 +10,18 @@ info:
     name: "Apache 2.0"
     url: "http://www.apache.org/licenses/LICENSE-2.0.html"
 host: "virtserver.swaggerhub.com"
-basePath: "/Hndl/lcache/1.0.0"
+basePath: "/lcache/1.0.1"
 tags:
-- name: "reporting"
-  description: "fetching reporting data"
-- name: "developers"
+- name: "developer"
   description: "Operations available to developers"
 schemes:
 - "https"
 - "http"
 paths:
-  /cache/{cachename}:
+  /cache/{cachename}/${key}:
     put:
       tags:
-      - "developers"
+      - "developer"
       summary: "adds an cache item"
       description: "Adds an item to the cache"
       operationId: "put"
@@ -37,24 +35,27 @@ paths:
         description: "the name of the cache to scan"
         required: true
         type: "string"
+      - name: "key"
+        in: "path"
+        description: "the key to search for"
+        required: true
+        type: "string"
       - in: "body"
         name: "CacheItem"
         description: "Inventory item to add"
         required: false
         schema:
-          $ref: "#/definitions/CachePut"
+          $ref: "#/definitions/CachedItem"
       responses:
         201:
           description: "item created"
-          schema:
-            type: "object"
         400:
           description: "invalid input, object invalid"
-      x-swagger-router-controller: "Developers"
+      x-swagger-router-controller: "Developer"
   /cache/{cachename}/{key}:
     get:
       tags:
-      - "developers"
+      - "developer"
       summary: "searches cache using key and retrieve related value/object"
       description: "Search cache for key and retreive payload\n"
       operationId: "get"
@@ -80,12 +81,10 @@ paths:
           description: "bad input parameter"
         404:
           description: "Key Not Found"
-        405:
-          description: "invalid METHOD"
-      x-swagger-router-controller: "Developers"
+      x-swagger-router-controller: "Developer"
     delete:
       tags:
-      - "developers"
+      - "developer"
       summary: "remove the object from the specified cache"
       description: "remove the item from the specified cache.\n"
       operationId: "del"
@@ -99,67 +98,19 @@ paths:
         in: "path"
         description: "the key to search for"
         required: true
-        type: "integer"
+        type: "string"
       responses:
         200:
           description: "Removed (even if !exist)"
         400:
           description: "bad input parameter"
-        405:
-          description: "invalid METHOD"
-      x-swagger-router-controller: "Developers"
+      x-swagger-router-controller: "Developer"
 definitions:
-  CacheItemKey:
+  CachedItem:
     required:
-    - "key"
+    - "payload"
     properties:
-      key:
+      payload:
         type: "string"
-        example: "mckd99488488377dhuhuhd"
     example:
-      key: "mckd99488488377dhuhuhd"
-  CacheItemTTL:
-    properties:
-      key:
-        type: "integer"
-    example:
-      key: 0
-  CacheItem:
-    properties:
-      key:
-        type: "object"
-        properties: {}
-    example:
-      key: "{}"
-  CacheName:
-    properties:
-      key:
-        type: "string"
-        example: "order, customer, addr"
-  CachePut:
-    type: "object"
-    required:
-    - "ttl"
-    properties:
-      keyname:
-        $ref: "#/definitions/CacheItemKey"
-      ttl:
-        $ref: "#/definitions/CacheItemTTL"
-      payload:
-        $ref: "#/definitions/CacheItem"
-    example:
-      payload:
-        key: "{}"
-      keyname:
-        key: "mckd99488488377dhuhuhd"
-      ttl:
-        key: 0
-  CacheResponse:
-    type: "object"
-    properties:
-      cacheType:
-        $ref: "#/definitions/CacheName"
-      keyname:
-        $ref: "#/definitions/CacheItemKey"
-      payload:
-        $ref: "#/definitions/CacheItem"
+      payload: "payload"

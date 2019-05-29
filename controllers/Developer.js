@@ -1,12 +1,12 @@
 'use strict';
 
 var utils = require('../utils/writer.js');
-var Developers = require('../service/DevelopersService');
+var Developer = require('../service/DeveloperService');
 
 module.exports.del = function del (req, res, next) {
   var cachename = req.swagger.params['cachename'].value;
   var key = req.swagger.params['key'].value;
-  Developers.del(cachename,key)
+  Developer.del(cachename,key)
     .then(function (response) {
       utils.writeJson(res, response);
     })
@@ -18,7 +18,7 @@ module.exports.del = function del (req, res, next) {
 module.exports.get = function get (req, res, next) {
   var cachename = req.swagger.params['cachename'].value;
   var key = req.swagger.params['key'].value;
-  Developers.get(cachename,key)
+  Developer.get(cachename,key)
     .then(function (response) {
       utils.writeJson(res, response);
     })
@@ -29,8 +29,9 @@ module.exports.get = function get (req, res, next) {
 
 module.exports.put = function put (req, res, next) {
   var cachename = req.swagger.params['cachename'].value;
+  var key = req.swagger.params['key'].value;
   var cacheItem = req.swagger.params['CacheItem'].value;
-  Developers.put(cachename,cacheItem)
+  Developer.put(cachename,key,cacheItem)
     .then(function (response) {
       utils.writeJson(res, response);
     })
