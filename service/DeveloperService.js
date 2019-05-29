@@ -35,7 +35,7 @@ exports.get = function(cachename,key) {
       console.log(`${key}@${cachename} - retrieve value: init`);
       db.get('key 1', function(err, value) {  
         if (err) {
-          console.err(`${key}@${cachename} - error[${err}]`);
+          console.log(`${key}@${cachename} - error[${err}]`);
         } else {
           examples['application/json'] = "{"+value+"}";
           console.log(`${key}@${cachename} - retrieve value: found`);
