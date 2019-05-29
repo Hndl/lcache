@@ -25,7 +25,7 @@ exports.del = function(cachename,key) {
  * key Integer the key to search for
  * returns Object
  **/
-exports.get = function(cachename,key) {
+exports.fetch = function(cachename,key) {
   return new Promise(function(resolve, reject) {
 
     var examples = {};
@@ -59,7 +59,7 @@ exports.get = function(cachename,key) {
  * cacheItem CachedItem Inventory item to add (optional)
  * no response value expected for this operation
  **/
-exports.put = function(cachename,key,cacheItem) {
+exports.set = function(cachename,key,cacheItem) {
   return new Promise(function(resolve, reject) {
     console.log(`${key}@${cachename} - storing value: init`);
     db.put(key, cacheItem); 
@@ -67,4 +67,3 @@ exports.put = function(cachename,key,cacheItem) {
     resolve();
   });
 }
-
