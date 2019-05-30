@@ -30,7 +30,7 @@ exports.fetch = function(cachename,key) {
   return new Promise(function(resolve, reject) {
     console.log(`${key}@${cachename} - get`);
     var examples = {};
-    if (Object.keys(examples).length > 0) {
+    //if (Object.keys(examples).length > 0) {
       
       console.log(`${key}@${cachename} - retrieve value: init`);
       
@@ -51,10 +51,11 @@ exports.fetch = function(cachename,key) {
        
         resolve(value);
       });
+      
       //resolve(examples[Object.keys(examples)[0]]);
-    } else {
-      resolve();
-    }
+    //} else {
+    //  resolve();
+    //}
   });
 }
 
