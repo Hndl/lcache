@@ -44,14 +44,14 @@ exports.fetch = function(cachename,key) {
         } else {
           console.log(`${key}@${cachename} - retrieve value: found`);
           console.log(`${key}@${cachename} - retrieve value: '${value}'`);
-          examples.push(value);
+          
           console.log(`${key}@${cachename} - retrieve value: found`);
        
         }
        
         resolve(value);
       });
-      
+
       //resolve(examples[Object.keys(examples)[0]]);
     //} else {
     //  resolve();
