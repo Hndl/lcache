@@ -1,23 +1,13 @@
 version: 2.1
 
 
-jobs:
-  check-and-build-only:
-    steps:
-      - checkout
-      - docker/check
-      - docker/build:
-          deploy : false
-          image: $CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME
+
 
 orbs:
   heroku: circleci/heroku@0.0.8
-  docker: circleci/docker@0.5.0
+#  docker: circleci/docker@0.5.0
 
 workflows:
-  build-docker-image-only:
-    jobs:
-      - check-and-build-only
       
   heroku_deploy:
     jobs:
