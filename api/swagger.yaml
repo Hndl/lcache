@@ -2,7 +2,7 @@
 swagger: "2.0"
 info:
   description: "LCache - Leveldb cache mechanism"
-  version: "1.0.1"
+  version: "1.0.2"
   title: "RESTFUL API"
   contact:
     email: "clive.bury@gmail.com"
@@ -19,6 +19,35 @@ schemes:
 - "http"
 paths:
   /cache/{cachename}/{key}:
+    get:
+      tags:
+      - "developer"
+      summary: "searches cache using key and retrieve related value/object"
+      description: "Search cache for key and retreive payload\n"
+      operationId: "fetch"
+      produces:
+      - "text/plain"
+      parameters:
+      - name: "cachename"
+        in: "path"
+        description: "the name of the cache to scan"
+        required: true
+        type: "string"
+      - name: "key"
+        in: "path"
+        description: "the key to search for"
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "Found"
+          schema:
+            type: "string"
+        400:
+          description: "bad input parameter"
+        404:
+          description: "Key Not Found"
+      x-swagger-router-controller: "Developer"
     put:
       tags:
       - "developer"
@@ -26,9 +55,9 @@ paths:
       description: "Adds an item to the cache"
       operationId: "set"
       consumes:
-      - "application/json"
+      - "text/plain"
       produces:
-      - "application/json"
+      - "text/plain"
       parameters:
       - name: "cachename"
         in: "path"
@@ -45,41 +74,12 @@ paths:
         description: "Inventory item to add"
         required: false
         schema:
-          $ref: "#/definitions/CachedItem"
+          type: "string"
       responses:
         201:
           description: "item created"
         400:
           description: "invalid input, object invalid"
-      x-swagger-router-controller: "Developer"
-    get:
-      tags:
-      - "developer"
-      summary: "searches cache using key and retrieve related value/object"
-      description: "Search cache for key and retreive payload\n"
-      operationId: "fetch"
-      produces:
-      - "application/json"
-      parameters:
-      - name: "cachename"
-        in: "path"
-        description: "the name of the cache to scan"
-        required: true
-        type: "string"
-      - name: "key"
-        in: "path"
-        description: "the key to search for"
-        required: true
-        type: "string"
-      responses:
-        200:
-          description: "Found"
-          schema:
-            type: "object"
-        400:
-          description: "bad input parameter"
-        404:
-          description: "Key Not Found"
       x-swagger-router-controller: "Developer"
     delete:
       tags:
@@ -111,5 +111,3 @@ definitions:
     properties:
       payload:
         type: "string"
-    example:
-      payload: "payload"
