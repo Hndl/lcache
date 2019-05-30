@@ -35,13 +35,21 @@ exports.fetch = function(cachename,key) {
       console.log(`${key}@${cachename} - retrieve value: init`);
       
       db.get(key, function(err, value) {  
+       
         if (err) {
+         
           console.log(`${key}@${cachename} - error[${err}]`);
+          resolve();
+
         } else {
+          console.log(`${key}@${cachename} - retrieve value: found`);
+          console.log(`${key}@${cachename} - retrieve value: '${value}'`);
           examples.push(value);
           console.log(`${key}@${cachename} - retrieve value: found`);
+       
         }
-        resolve(examples[Object.keys(examples)[0]]);
+       
+        resolve(value);
       });
       //resolve(examples[Object.keys(examples)[0]]);
     } else {
