@@ -13,7 +13,7 @@ exports.del = function(cachename,key) {
   return new Promise(function(resolve, reject) {
     console.log(`deleting ${key}@${cachename} - init`);
     resolve();
-    console.log(`deleting ${key}@${cachename} - done`);
+    
   });
 }
 
@@ -38,7 +38,7 @@ exports.fetch = function(cachename,key) {
         if (err) {
           console.log(`${key}@${cachename} - error[${err}]`);
         } else {
-          examples= value;
+          examples.push(value);
           console.log(`${key}@${cachename} - retrieve value: found`);
         }
         resolve(examples[Object.keys(examples)[0]]);
@@ -65,6 +65,7 @@ exports.set = function(cachename,key,cacheItem) {
     console.log(`SET ${key}@${cachename} - storing value: init`);
     db.put(key, cacheItem); 
     console.log(`SET ${key}@${cachename} - storing value: done`);
+    resolve();
   });
 }
 
