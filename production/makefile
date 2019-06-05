@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help 
-.PHONEY := help all build container clean build_clean container_clean
+.PHONEY := help all image container clean image_clean container_clean
 
 APPNAME = lcache
 FOLDER = .
@@ -12,16 +12,16 @@ DK_RMTPORT = 8080
 
 help:
 	@echo ":: HELP ::"
-	@echo "\tavailable commands: help, all, build, container, clean"
+	@echo "\tavailable commands: help, all, image, container, clean"
 	@echo "\tbuild image: ${DK_IMGNAME}"
 	@echo "\tcontainer: ${DK_CNTNAME}"
 	@echo ":: HELP :: DONE ::"
 
-all: 	container_clean build_clean build container
+all: 	container_clean image_clean image container
 	@echo ":: ALL  :: "
 	@echo ":: ALL  :: DONE ::"
 
-build_clean:
+image_clean:
 	@echo ":: BUILD - CLEAN :: "
 	@echo "\tdestorying image ${DK_IMGNAME}"
 	@echo "=================================================="
@@ -29,7 +29,7 @@ build_clean:
 	@echo "=================================================="
 	@echo ":: BUILD - CLEAN :: DONE :: "
 
-build: build_clean 
+image: image_clean 
 	@echo ":: BUILD ::"
 	@echo "\tbuilding docker image ${DK_IMGNAME}"
 	@echo "=================================================="
@@ -53,7 +53,7 @@ container: container_clean
 	@echo "=================================================="
 	@echo ":: CONTAINER :: DONE ::"
 
-clean: container_clean build_clean
+clean: container_clean image_clean
 	@echo ":: CLEAN ::"
 	@echo ":: CLEAN :: DONE ::"
 		
