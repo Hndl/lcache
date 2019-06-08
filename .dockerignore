@@ -1,3 +1,27 @@
 # do not include the produciton docker image build
-/production/*
+
+#
+# production docker image build. No need to include this
+#
+production
+
+
+#
+# do no copy the node_modules, this will be reinstalled as part of the npm install
+#
+node_modules
+
+#
+# Ignore hiddle files.
+#
+
+.*
+
+#
+# Leave the Docker build file and makefile
+#
+Dockerfile
+makefile
+
+
 
