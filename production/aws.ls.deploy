@@ -1,0 +1,209 @@
+#!/bin/ksh
+
+# =============================================================================================================================================
+# Script: aws.ls.createinstance
+# Description: creates a new instance of a server and performs the Process Flow as defined below. see Process Flow:
+# Arguments:	${1}	<String>	regional prefix,	example 'london'
+# 				${2}	<String>	instance name,		example 'nCache-01'
+#
+#				Note: To create the instance name, the script will use the $1-Object-OS-Bundle-${2}
+#						Example:
+#							instance name - london-svr-lin-node-nCache-01
+#							static ip.	  - london.sip-nCache-01
+#
+# 2017 Nov 9 - CGB - Added the -f flag to force the deletion and rebuild of existing server.
+# 
+# =============================================================================================================================================
+
+INSTANCE_NAME="${1}-${2}"
+APP_NAME="lcache"
+GIT_FOLDER=${APP_NAME}
+ENTRY_POINT="index.js"
+INSTALL_FOLDER=/usr/src
+INS_NAME="--instance-names"
+IMG_NAME="--custom-image-name foo"
+BLU_PRNT="--blueprint-id nodejs_8_4_0"
+BUN_LEID="--bundle-id nano_1_0"
+KEY_PAIR="--key-pair-name LightsailDefaultKeyPair"
+PRO_FILE="--profile london"
+LCH_SCPT="cd ${INSTALL_FOLDER}; sudo git clone https://github.com/Hndl/${GIT_FOLDER} ; cd ${APP_NAME} ; sudo mkdir data ; sudo npm install ; sudo nohup node ${ENTRY_POINT} 1>&2 &"
+POR_OPEN="--port-infos fromPort=22,toPort=22,protocol=TCP fromPort=8080,toPort=49160,protocol=TCP"
+
+AWS_REGION="--availability-zone eu-west-2a"
+AWS_CMD_CREATE="lightsail create-instances"	
+AWS_CMD_RESTRICTPORTS="lightsail put-instance-public-ports"
+AWS_CMD_GETINST="lightsail get-instances"
+AWS_CMD_STATIC_IP="lightsail get-static-ips"
+AWS_CMD_ATTACH_IP="lightsail attach-static-ip"
+AWS_CMD_CREATE_STATIC_IP="lightsail allocate-static-ip"
+AWS_CMD_DELETE_SVR="lightsail delete-instance"
+
+AWS_SVR_STATE_RUNNING="16"
+AWS_SVR_STATE_UNKNOWN="-1"
+AWS_SVR_STATE_PENDING="0"
+
+# ==================================================================================================================================================================
+#	Process Flow:
+#		1: Create Instance [free/cheap instance of server]
+#			a: Linux, Git, Node, Hndle/nCache
+#		2: Wait until instance is running
+#			a: check instance created
+#		3: Restrict Ports
+#			a: SSH:22
+#			b: nCache: 5000-50001
+#		4: Check for Free Static IP
+#			a: if unattached static IP exists, then attach it.
+#			b: if requested, create static ip
+#				1: attach it to instance.
+#		5: check server/app is accessible
+#			a: curl request to port 5000
+#		
+#
+# ==================================================================================================================================================================
+function makeSvrName {
+	echo "${1}-svr-lin-node-${2}"
+}
+function makeStaticIPName {
+	echo "${1}-sip-${2}"
+}
+
+# ==================================================================================================================================================================
+# [1]
+# Create the instance of the server on aws lighsail.
+#   - 512MB
+#	- 1CPU
+#	- OS: Amazon Linux
+#	- Package: node 8.4.0
+#	- London.
+#
+# 	- Lauch Script:	clone git repository of Hndl/nCache . This contains the source code for the memory cache.
+#	-				using npm, we then install the required libs....
+#	-				then exec the app and bg the process using nohup.
+#	-				nCache required, ports 5000 and 50001 to be open.  
+#	-					port 5000 is used by clients to put/get cache items.  	
+#	-					port 5001 is used by webclients to listen for graph data over websocket.
+#
+# ==================================================================================================================================================================
+INSTANCE_NAME=`makeSvrName "${1}" "${2}"`
+
+server_exists=`aws ${AWS_CMD_GETINST} ${PRO_FILE} | node aws-response-parser "${INSTANCE_NAME}" | awk -F',' '{print $2}' | awk -F':' '{print $2}' | sed -e "s/ //g"`
+
+if [ "${server_exists}" -ne -1 ] ; then
+	echo "Server Instance ${INSTANCE_NAME} already exists!"
+	if [ "${3}" = "-f" ] ; then
+		echo "++[Step:0/5] Destroying current instance of ${INSTANCE_NAME} on aws lightsail... static IP persisted"
+		aws ${AWS_CMD_DELETE_SVR} --instance-name ${INSTANCE_NAME} ${PRO_FILE}
+		if [ ${?} -ne 0 ] ; then
+			echo "++[Step:0/5] Destroying of ${INSTANCE_NAME} failed!!! doh!"
+			exit 2
+		else
+			echo "++[Step:0/5] Destroying of ${INSTANCE_NAME} competed!!! yippee!"
+		fi
+	else
+		exit 3
+	fi
+fi
+
+echo "++[Step:1/5] Creating new instance of ${INSTANCE_NAME} on aws lightsail..."
+aws ${AWS_CMD_CREATE} ${INS_NAME} "${INSTANCE_NAME}" ${AWS_REGION} ${IMG_NAME} ${BLU_PRNT} ${BUN_LEID} --user-data "${LCH_SCPT}" ${KEY_PAIR} ${PRO_FILE}
+
+
+# ==================================================================================================================================================================
+# [2]
+# The server instance has been created, we must now wait for the server to become available.  To show this, the state of the server must be 16.  Even, 
+# when in this state, connecting to the server may not be possible.  
+#
+# TODO	-	rather than query the state, consider curling a request to port 80/443 - on successful response, we can then go an confirm the servers status.  
+# 			this would be a cleaner approach as the number of API calls and the rate of API call exec is capped by AWS/Lghtsail.  Doing the HTTP check, 
+#			would allow us to limit the number of aws API calls.
+# ==================================================================================================================================================================
+echo "++[Step:2/5] Checking ${INSTANCE_NAME} status"
+server_state=0
+while [[ ${server_state} -ne "${AWS_SVR_STATE_RUNNING}" ]]
+do
+	# ==============================================================================================================================================================
+	# Wait some time, before checking the instance.  It's not going to be avail' right away, so wait 15 seconds before checking.
+	# once, its running (state:16) we can then move to the next phase, restricting PORTS.
+	# ==============================================================================================================================================================
+	sleep 15
+	echo "++[Step:2/5] Checking ${INSTANCE_NAME} status, waiting for it to start before restricting ports"
+	server_state=`aws ${AWS_CMD_GETINST} ${PRO_FILE} | node aws-response-parser "${INSTANCE_NAME}" --instance | awk -F',' '{print $2}' | awk -F':' '{print $2}' | sed -e "s/ //g"`
+	echo "++[Step:2] state of ${INSTANCE_NAME} ${server_state}"
+done
+
+# ==============================================================================================================================================================
+# [3]
+# Double check that the server status is confirmed as running.
+# then continue to restrict the ports to only SSH:22 and nCache: 5000-5001.
+# ==============================================================================================================================================================
+if [ "${server_state}" -eq "${AWS_SVR_STATE_RUNNING}" ]; then
+	echo "++[Step:3/5]  Restrict PORT @${INS_NAME} - ${POR_OPEN}"
+	aws ${AWS_CMD_RESTRICTPORTS}  --instance-name "${INSTANCE_NAME}" ${POR_OPEN} ${PRO_FILE} 
+fi
+
+
+# ==============================================================================================================================================================
+# [4]
+# Check for unattached statis IP. with the prefix of ${1}.  
+#
+#
+# ==============================================================================================================================================================
+STATIC_IPNAME=`makeStaticIPName ${1} ${2}`
+echo "++[Step:4/5]  aws lightsail charges for unattached static ips.  checking for static unattached ips. related to this instance ${STATIC_IPNAME}"
+aws_ip_response=`aws ${AWS_CMD_STATIC_IP} ${PRO_FILE} | node aws-response-parser "${STATIC_IPNAME}" --free-static-ip`
+if [ ${?} -eq 0 ]; then
+	
+	echo "++[Step:4/5] DEBUG: {${?} -eq 0} = ${aws_ip_response}"
+	# ======================================================================================
+	# We have found, an unattached static ip, which matches our node's pattern.
+	# we MUST attach it to this new svr instance.
+	#	 
+	# ======================================================================================
+	unattached_static_ipname=`echo ${aws_ip_response} | awk -F',' '{print $2}' | awk -F':' '{print $2}' | sed -e "s/ //g"`
+	echo "++[Step:4a/5] - Found Matching Static IP = ${unattached_static_ipname}. Attaching existing..."
+	# exec aws lightsail attach static ip command.	${unattached_static_ipname} to ${INSTANCE_NAME}.
+	aws ${AWS_CMD_ATTACH_IP} --static-ip-name "${unattached_static_ipname}" --instance-name "${INSTANCE_NAME}" ${PRO_FILE}
+
+else
+	#echo "++[Step:4/5] DEBUG: {else} = ${aws_ip_response}"
+	# ======================================================================================
+	# There are no unattached ips which match our
+	# svrs name pattern...
+	#  - b: check for unattached, the aws_ip_response contains a field no.6, 'NoOfUnattached'
+	#  		if >0, then there are other unattached API. If so, go get one, and attach it.
+	#  - c: check for unaattached, NoOfUnattached == 0
+	#  		well, there are no unaatached static ips, go create one using the name supplied
+	#  		by makeStaticIP function.
+	#
+	# ======================================================================================
+	NoOfUnattached=`echo ${aws_ip_response} | awk -F',' '{print $6}' | awk -F':' '{print $2}' | sed -e "s/ //g"`
+	#echo "++[Step:4/5] DEBUG: {NoOfUnattached} = ${NoOfUnattached}"
+	if [ ${NoOfUnattached} -gt 0 ] ; then
+		# [b]	
+		echo "/t++[Step:4b/5] - No matching static ip.  Attaching, existing..."  
+		aws_ip_response=`aws ${AWS_CMD_STATIC_IP} ${PRO_FILE} | node aws-response-parser "" --free-static-ip`
+		unattached_static_ipname=`echo ${aws_ip_response} | awk -F',' '{print $2}' | awk -F':' '{print $2}' | sed -e "s/ //g"`
+		echo "++[Step:4b/5] - No matching static ip.  Attaching, existing ${unattached_static_ipname}..."  
+		# exec aws lightsail attach static ip command.	${unattached_static_ipname} to ${INSTANCE_NAME}.
+		aws ${AWS_CMD_ATTACH_IP} --static-ip-name "${unattached_static_ipname}" --instance-name "${INSTANCE_NAME}" ${PRO_FILE}
+		
+	else
+		# [c]
+		echo "++[Step:4c/5] - No matching static ip. Creating new and attaching"
+		# exec aws lightsail create static ip makeStaticIPName "${1}".
+		aws ${AWS_CMD_CREATE_STATIC_IP} --static-ip-name "${STATIC_IPNAME}" ${PRO_FILE}
+		# exec aws lightsail attach static ip command.	${unattached_static_ipname} to ${INSTANCE_NAME}.
+		aws ${AWS_CMD_ATTACH_IP} --static-ip-name "${STATIC_IPNAME}" --instance-name "${INSTANCE_NAME}" ${PRO_FILE}
+		
+	fi
+fi
+
+aws ${AWS_CMD_GETINST} ${PRO_FILE} | node aws-response-parser "${INSTANCE_NAME}"
+
+exit 0;
+
+
+
+
+
+
