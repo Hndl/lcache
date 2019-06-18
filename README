@@ -1,5 +1,7 @@
 Lcache
 
+cah
+
 1: method:GET uri lcache/api/get/<type>/<key>
 2: method:DELETE lcache/api/get/<type>/<key>
 3: method:PUT url lcache/api/put/<type>/<key>    BODY:data
